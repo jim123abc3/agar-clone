@@ -52,6 +52,6 @@ canvas.addEventListener('mousemove', (event) => {
     yVector = (1 - ((angleDeg + 90) / 90));
   }
 
-  player.xVector = xVector;
-  player.yVector = yVector;
+  player.xVector = xVector || .1;
+  player.yVector = yVector || .1;
 });
