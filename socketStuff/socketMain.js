@@ -1,6 +1,9 @@
 const io = require('../servers').io;
 const app = require('../servers').app;
 
+const checkForOrbCollisions = require('./checkCollisions').checkForOrbCollisions;
+const checkForPlayerCollisions = require('./checkCollisions').checkForPlayerCollisions;
+
 const Player = require('./classes/Player');
 const PlayerConfig = require('./classes/PlayerConfig');
 const PlayerData = require('./classes/PlayerData');
@@ -54,13 +57,28 @@ io.on('connect', (socket) => {
     const xV = player.playerConfig.xVector = data.xVector;
     const yV = player.playerConfig.yVector = data.yVector;
 
-    if ((player.playerData.locX < 5 && xV < 0) || (player.playerData.locX > 500) && (xV > 0)) {
-      player.playerData.locY -= speed * yV;
-    } else if ((player.playerData.locY < 5 && yV > 0) || (player.playerData.locY > 500) && (yV < 0)) {
+    if ((player.playerData.locX > 5 && xV < 0) || (player.playerData.locX < settings.worldWidth) && (xV > 0)) {
       player.playerData.locX += speed * xV;
-    } else {
-      player.playerData.locX += speed * xV;
+    }
+    if ((player.playerData.locY > 5 && yV > 0) || (player.playerData.locY < settings.worldHeight) && (yV < 0)) {
       player.playerData.locY -= speed * yV;
+    }
+
+    const capturedOrbI = checkForOrbCollisions(player.playerData, player.playerConfig, orbs, settings);
+
+    if(capturedOrbI !== null){
+      orbs.splice(capturedOrbI,1,new Orb(settings));
+
+      const orbData = {
+        capturedOrbI,
+        newOrb: orbs[capturedOrbI],
+      }
+      io.to('game').emit('orbSwitch', orbData);
+    }
+
+    const absorbedData = checkForPlayerCollisions(player.playerData, player.playerConfig, players, playersForUsers, socket.id);
+    if(absorbedData){
+      io.to('game').emit('playerAbsorbed', absorbedData);
     }
 
   });
