@@ -11,12 +11,12 @@ const Orb = require('./classes/Orb');
 
 const orbs = [];
 const settings = {
-  defaultNumberOfOrbs: 500,
+  defaultNumberOfOrbs: 5000,
   defaultSpeed: 6,
   defaultSize: 6,
   defaultZoom: 1.5,
-  worldWidth: 500,
-  worldHeight: 500,
+  worldWidth: 5000,
+  worldHeight: 5000,
   defaultGenericOrbSize: 5
 }
 const players = [];
@@ -74,16 +74,27 @@ io.on('connect', (socket) => {
         newOrb: orbs[capturedOrbI],
       }
       io.to('game').emit('orbSwitch', orbData);
+      io.to('game').emit('updateLeaderBoard', getLeaderBoard());
     }
 
     const absorbedData = checkForPlayerCollisions(player.playerData, player.playerConfig, players, playersForUsers, socket.id);
     if(absorbedData){
       io.to('game').emit('playerAbsorbed', absorbedData);
+      io.to('game').emit('updateLeaderBoard', getLeaderBoard());
     }
 
   });
 
-  socket.on('disconnect',() => {
+  socket.on('disconnect',(reason) => {
+    
+    for(let i = 0; i < players.length; i++){
+      if(players[i].socketId === player.socketId){
+        players.splice(i, 1, {});
+        playersForUsers.splice(i, 1, {});
+        break;
+      }
+    }
+
     if(players.length === 0){
       clearInterval(tickTockInterval);
     }
@@ -94,4 +105,19 @@ function initGame() {
   for (let i = 0; i < settings.defaultNumberOfOrbs; i++) {
     orbs.push(new Orb(settings));
   }
+}
+
+function getLeaderBoard() {
+  const leaderBoardArray = players.map(curPlayer => {
+    if(curPlayer.playerData){
+      return{
+        name: curPlayer.playerData.name,
+        score: curPlayer.playerData.score,
+      }
+    } else{
+      return {}
+    }
+  });
+
+  return leaderBoardArray;
 }

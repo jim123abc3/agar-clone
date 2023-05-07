@@ -4,15 +4,20 @@ player.locY = Math.floor(500 * Math.random() + 10);
 
 const draw = () => {
 
-  context.setTransform(1,0,0,1,0,0);
-  context.clearRect(0,0, canvas.width, canvas.height);
+  context.setTransform(1, 0, 0, 1, 0, 0);
+  context.clearRect(0, 0, canvas.width, canvas.height);
 
   const camX = -player.locX + canvas.width / 2
   const camY = -player.locY + canvas.height / 2
-  context.translate(camX,camY);
-  
+  context.translate(camX, camY);
+
   players.forEach(p => {
     context.beginPath();
+
+    if (!p.playerData) {
+      return
+    }
+
     context.fillStyle = p.playerData.color;
     context.arc(p.playerData.locX, p.playerData.locY, p.playerData.radius, 0, Math.PI * 2);
     context.fill();
